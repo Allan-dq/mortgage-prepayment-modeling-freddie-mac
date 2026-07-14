@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite this repository and Freddie Mac's SFLLD documentation."
+title: "Mortgage Prepayment Modeling with Public Freddie Mac Data"
+type: software
+authors:
+  - family-names: Dai
+    given-names: Qin
+version: 0.1.0
+date-released: 2026-07-13
+license: MIT

@@ -1,0 +1,28 @@
+# Freddie Mac loan-level data are licensed and must not be redistributed.
+data/raw/**
+data/interim/**
+data/processed/**
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+
+# Loan-level predictions and serialized models are intentionally local-only.
+artifacts/models/**
+artifacts/predictions/**
+!artifacts/models/.gitkeep
+!artifacts/predictions/.gitkeep
+reports/**/private_artifacts/**
+
+.venv/
+.mplconfig/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+.idea/
+.vscode/
+.DS_Store
+
+# Temporary files created only during GitHub CLI device authorization.
+.gh-auth-*
+.gh-refresh-*

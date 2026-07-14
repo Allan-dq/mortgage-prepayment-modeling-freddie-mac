@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "freddie-prepayment-modeling"
+version = "0.1.0"
+description = "Leakage-aware loan-month prepayment modeling with public Freddie Mac SFLLD data"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{name = "Qin Dai"}]
+license = {text = "MIT"}
+dependencies = [
+  "numpy>=1.26,<3",
+  "pandas>=2.2,<3",
+  "pyarrow>=16,<22",
+  "scikit-learn>=1.5,<2",
+  "matplotlib>=3.9,<4",
+  "seaborn>=0.13,<1",
+  "joblib>=1.4,<2",
+]
+
+[project.scripts]
+prepayment-model = "prepayment.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
