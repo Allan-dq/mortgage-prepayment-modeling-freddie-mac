@@ -13,7 +13,8 @@ Official resources:
 - Terms and Conditions: https://capitalmarkets.freddiemac.com/crt/docs/pdfs/fre_terms_conditions_sflld.pdf
 
 The repository's MIT license covers only original code and documentation. It
-does not supersede Freddie Mac's terms. Do not commit raw, processed, sampled,
+does not apply to Freddie Mac data, trademarks, or documentation, and it does not
+supersede Freddie Mac's terms. Do not commit raw, processed, sampled,
 or predicted loan-level records. Aggregate charts and metrics should be reviewed
 to ensure they cannot be used to reconstruct or identify source records.
 
