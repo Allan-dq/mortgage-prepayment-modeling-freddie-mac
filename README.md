@@ -11,9 +11,9 @@ a transparent regularized logistic benchmark from a nonlinear gradient-boosting
 challenger, validates them through calendar time, and emphasizes probability
 calibration—not accuracy alone.
 
-> **Portfolio-project boundary:** this is an independent public project created
-> from public Freddie Mac documentation and user-obtained SFLLD files. It contains
-> no employer or interview-assignment data, code, results, or proprietary logic.
+> **Project boundary:** this is an independent project built from public Freddie Mac
+> documentation and user-obtained SFLLD files. It contains no proprietary data, code,
+> results, or logic.
 
 ## Executive summary
 
