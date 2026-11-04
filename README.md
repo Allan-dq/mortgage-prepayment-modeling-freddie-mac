@@ -56,6 +56,7 @@ record. The termination row is never exposed to the model.
 │   ├── reporting.py     # aggregate diagnostics
 │   ├── schema.py        # July 2026 Release 47 schemas
 │   └── synthetic.py     # deterministic CI/demo generator
+├── scripts/             # FRED rate download, demo runners, business translation
 ├── tests/               # target and temporal-split invariants
 ├── docs/                # methodology, data dictionary, reproducibility
 ├── reports/demo/        # committed aggregate synthetic-demo outputs
@@ -211,6 +212,41 @@ The synthetic demonstration is designed with known nonlinear relationships, so
 its achieved AUC is neither a benchmark nor a target for real SFLLD work. Real
 performance depends on horizon, population, vintage, rate environment, leakage
 controls, and whether the payoff definition includes scheduled maturity.
+
+## Business translation: what one point of prepayment speed is worth
+
+The model predicts a monthly payoff probability (SMM) for each loan. Weighted by unpaid balance
+and annualized (`CPR = 1 - (1 - SMM)^12`), that becomes the prepayment speed that drives an
+MBS holder's cash flows. For an illustrative $100M pool of 30-year, 6.00% level-payment loans,
+moving from 8% to 9% CPR gives (`python scripts/business_translation.py`):
+
+| | 8% CPR | 9% CPR | Change |
+|---|---:|---:|---:|
+| Weighted-average life | 8.96 years | 8.28 years | -0.68 years |
+| Principal returned in year 1 | $9.13M | $10.12M | +$0.99M |
+| Premium pool (valued at a 5.00% yield): price | 106.435 | 106.049 | -0.386 (-$0.39M) |
+| Premium pool: modified duration | 6.40 | 6.02 | -0.38 years |
+| Discount pool (valued at a 7.00% yield): price | 94.246 | 94.562 | +0.316 (+$0.32M) |
+| Discount pool: modified duration | 5.78 | 5.46 | -0.32 years |
+
+What it means for an investor:
+
+- **Premium holders lose when prepayments speed up.** They paid above par, and each dollar
+  repaid early comes back at par, so the premium is written off sooner and fewer above-market
+  coupons are collected: about 0.39 points of value per point of CPR here.
+- **Discount holders gain**, because principal bought below par is returned at par sooner.
+- **Duration shortens either way**, by about 0.3 to 0.4 years per point of CPR. A hedge sized for
+  8% CPR is too long if 9% materializes and has to be rebalanced.
+- **Negative convexity.** Prepayments rise when rates fall, so duration shortens exactly when a
+  holder wants it longer, and the returned principal is reinvested at lower yields.
+- **Why calibration matters more than ranking.** A forecast that runs one point too slow on a
+  $1B premium book misstates its value by about $3.9M under these assumptions. That is why this
+  project reports calibration and Brier score next to AUC, and why UPB-weighted SMM/CPR is the
+  next step on real data.
+
+Assumptions: constant CPR, pass-through coupon equal to the note rate (no servicing or guarantee
+fee), and duration measured at a fixed prepayment speed (static, not option-adjusted). The figures
+illustrate the mechanics; they are not estimates from Freddie Mac data.
 
 ## Limitations and next research steps
 
