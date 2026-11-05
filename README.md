@@ -1,5 +1,6 @@
 # Mortgage Prepayment Modeling with Public Freddie Mac Data
 
+[![CI](https://github.com/Allan-dq/mortgage-prepayment-modeling-freddie-mac/actions/workflows/ci.yml/badge.svg)](https://github.com/Allan-dq/mortgage-prepayment-modeling-freddie-mac/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT (code only)](https://img.shields.io/badge/Code%20License-MIT-2EA44F.svg)](LICENSE)
 [![Data: Freddie Mac SFLLD](https://img.shields.io/badge/Data-Freddie%20Mac%20SFLLD-102A43.svg)](https://www.freddiemac.com/research/datasets/sf-loanlevel-dataset)
@@ -14,6 +15,17 @@ calibration—not accuracy alone.
 > **Project boundary:** this is an independent project built from public Freddie Mac
 > documentation and user-obtained SFLLD files. It contains no proprietary data, code,
 > results, or logic.
+
+## At a glance
+
+| | |
+|---|---|
+| Question | Will a performing fixed-rate loan pay off voluntarily next month (Freddie Mac zero-balance code `01`)? |
+| Models | Regularized logistic benchmark vs. histogram gradient-boosting challenger |
+| Validation | Non-overlapping calendar blocks (train / validate / test); ROC AUC, PR AUC, Brier score, calibration, decile lift |
+| What +1pp CPR means | On an illustrative $100M 6% pool: life shortens 0.68 years; a premium pool (5% yield) loses 0.39 points, a discount pool (7% yield) gains 0.32 ([business translation](#business-translation-what-one-point-of-prepayment-speed-is-worth)) |
+| Freddie Mac results | Not in this repository: SFLLD loan-level data are licensed and not redistributed. Run `prepayment-model freddie` on your own files ([steps](#running-on-locally-licensed-freddie-mac-files)) |
+| Run it now | `pip install -e . && pytest && prepayment-model demo --loans 3000 --seed 42 --output reports/demo` uses synthetic data, no download needed ([details](#quick-start-fully-reproducible-synthetic-demonstration)) |
 
 ## Executive summary
 

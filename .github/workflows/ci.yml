@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install
+        run: |
+          pip install -e .
+          pip install "pytest>=8,<9"
+      - name: Unit tests
+        run: pytest
+      - name: Synthetic demo (end to end, no licensed data)
+        run: prepayment-model demo --loans 3000 --seed 42 --output "$RUNNER_TEMP/demo"
+      - name: Demo results match the committed ones
+        run: diff "$RUNNER_TEMP/demo/DEMO_RESULTS.md" reports/demo/DEMO_RESULTS.md
+      - name: Business translation numbers
+        run: python scripts/business_translation.py
