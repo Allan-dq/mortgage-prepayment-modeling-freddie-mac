@@ -30,3 +30,5 @@ jobs:
         run: diff "$RUNNER_TEMP/demo/DEMO_RESULTS.md" reports/demo/DEMO_RESULTS.md
       - name: Business translation numbers
         run: python scripts/business_translation.py
+      - name: Valuation demo (QuantLib, synthetic model)
+        run: prepayment-model value --paths 400 --output "$RUNNER_TEMP/valuation"

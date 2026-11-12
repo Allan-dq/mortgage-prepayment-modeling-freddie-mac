@@ -148,3 +148,98 @@ Freddie Mac, place them under `data/raw/`, and run `prepayment-model freddie`.
 Review the resulting aggregate diagnostics before making any investment use.
 """
     Path(report_path).write_text(body, encoding="utf-8")
+
+
+def create_valuation_report(valuer, valuation, model_note: str, output_dir: str | Path) -> None:
+    """Write the valuation demonstration: one Markdown summary and one figure."""
+    output = Path(output_dir)
+    (output / "figures").mkdir(parents=True, exist_ok=True)
+    pool, market = valuer.pool, valuer.market
+    shifts = valuer.shift_table(valuation)
+    speeds = valuer.speed_table()
+    base = shifts.loc[shifts["shift_bp"] == 0].iloc[0]
+    bp = 1e4
+
+    shift_rows = "\n".join(
+        f"| {row.shift_bp:+.0f} | {row.mortgage_rate:.2f}% | {row.model_price:.3f} | "
+        f"{row.model_price - base.model_price:+.3f} | {row.fixed_cash_flow_price:.3f} | "
+        f"{row.fixed_cash_flow_price - base.fixed_cash_flow_price:+.3f} | "
+        f"{row.forward_cpr_year2:.1%} | {row.forward_wal:.2f} |"
+        for row in shifts.itertuples()
+    )
+    speed_rows = "\n".join(
+        f"| {row.incentive:+.1f} | {row.cpr_year1:.1%} | {row.cpr_year3:.1%} | {row.cpr_year8:.1%} |"
+        for row in speeds.itertuples()
+    )
+    curve_rows = " | ".join(f"{t:g}y: {z:.2%}" for t, z in zip(market.tenors_years, market.zero_rates))
+    body = f"""# MBS valuation demonstration (synthetic model, illustrative market)
+
+> **Important:** the prepayment model here is fitted on the repository's synthetic loans, the
+> yield curve, mortgage spread and rate volatility are made-up inputs, and the price is an
+> input rather than a quote. The numbers show how a prepayment model turns into a price, a
+> spread and a hedge ratio. They are **not a valuation of any security**.
+
+## Inputs
+
+- Pool: {pool.wac:.2f}% note rate, {pool.coupon:.2f}% pass-through coupon, {pool.remaining_months} months remaining, loan age {pool.loan_age}; representative loan with FICO {pool.fico:.0f}, LTV {pool.original_ltv:.0f}, DTI {pool.original_dti:.0f}, balance ${pool.original_upb:,.0f}
+- Zero curve (continuous compounding): {curve_rows}
+- Market mortgage rate: 10-year zero yield + {market.mortgage_spread:.2f} points = {base.mortgage_rate:.2f}% today
+- Hull-White short-rate model: mean reversion {market.mean_reversion:.3f}, volatility {market.volatility:.4f}
+- Prepayment model: {model_note}
+- Monte Carlo: {valuation.n_paths:,} paths in antithetic pairs, seed {valuer.seed}; paths rescaled to reprice the curve (largest correction {valuation.curve_fit:.2%})
+
+## Results at a price of {valuation.price:.3f}
+
+| Measure | Value |
+|---|---:|
+| Option-adjusted spread (OAS) | {valuation.oas * bp:.1f} bp (standard error about {valuation.oas_std_error * bp:.1f} bp) |
+| Zero-volatility spread | {valuation.zero_vol_spread * bp:.1f} bp |
+| Option cost (zero-volatility spread minus OAS) | {valuation.option_cost * bp:.1f} bp |
+| Effective duration (prepayments respond to rates) | {valuation.effective_duration:.2f} |
+| Effective convexity | {valuation.effective_convexity / 100:.2f} |
+| Duration if cash flows were fixed | {valuation.static_duration:.2f} |
+| Convexity if cash flows were fixed | {valuation.static_convexity / 100:.2f} |
+| Weighted-average life on the forward path | {valuation.wal_forward:.2f} years |
+| Weighted-average life across paths: mean (5th to 95th percentile) | {valuation.wal_mean:.2f} years ({valuation.wal_5th:.2f} to {valuation.wal_95th:.2f}) |
+
+Durations and convexities come from moving the whole curve by 25 bp each way; convexity is
+`(P_down + P_up - 2 P) / (P * shift^2) / 100`.
+
+## Parallel curve shifts
+
+Model price holds the OAS fixed and lets prepayments respond. The fixed-cash-flow price
+keeps today's forward-path cash flows and holds the zero-volatility spread fixed.
+
+| Shift (bp) | Mortgage rate today | Model price | Change | Fixed-cash-flow price | Change | Forward-path CPR, year 2 | Forward-path WAL (years) |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+{shift_rows}
+
+## What the prepayment model does
+
+Prepayment speed (CPR) if the market mortgage rate stayed at the note rate minus the
+incentive for the whole life of the pool:
+
+| Incentive (points) | CPR in year 1 | CPR in year 3 | CPR in year 8 |
+|---:|---:|---:|---:|
+{speed_rows}
+"""
+    (output / "VALUATION_RESULTS.md").write_text(body, encoding="utf-8")
+    shifts.to_csv(output / "figures" / "curve_shifts.csv", index=False)
+
+    _style()
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
+    axes[0].plot(shifts["shift_bp"], shifts["fixed_cash_flow_price"], marker="o", lw=2,
+                 color=COLORS["gray"], label="Cash flows fixed")
+    axes[0].plot(shifts["shift_bp"], shifts["model_price"], marker="o", lw=2.2,
+                 color=COLORS["blue"], label="Prepayments respond to rates")
+    axes[0].set(title="Price after a parallel curve shift", xlabel="Shift (bp)", ylabel="Price per 100")
+    axes[0].legend(frameon=False)
+    months = np.arange(1, 121)
+    for shift_bp, color in ((-100, COLORS["gold"]), (0, COLORS["navy"]), (100, COLORS["teal"])):
+        smm = valuer.forward(shift_bp / 1e4).smm[0, :120]
+        axes[1].plot(months, 100 * (1 - (1 - smm) ** 12), lw=2, color=color, label=f"{shift_bp:+d} bp")
+    axes[1].set(title="Projected speed on the forward path", xlabel="Month", ylabel="CPR (%)")
+    axes[1].legend(frameon=False, title="Curve shift")
+    fig.tight_layout()
+    fig.savefig(output / "figures" / "price_and_speed.png", bbox_inches="tight")
+    plt.close(fig)

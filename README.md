@@ -66,6 +66,7 @@ record. The termination row is never exposed to the model.
 │   ├── features.py      # incentive, seasoning, burnout, credit features
 │   ├── modeling.py      # temporal split, two models, metrics
 │   ├── reporting.py     # aggregate diagnostics
+│   ├── valuation.py     # QuantLib rate paths, cash flows, OAS, duration
 │   ├── schema.py        # July 2026 Release 47 schemas
 │   └── synthetic.py     # deterministic CI/demo generator
 ├── scripts/             # FRED rate download, demo runners, business translation
@@ -260,6 +261,33 @@ Assumptions: constant CPR, pass-through coupon equal to the note rate (no servic
 fee), and duration measured at a fixed prepayment speed (static, not option-adjusted). The figures
 illustrate the mechanics; they are not estimates from Freddie Mac data.
 
+## From model to price: MBS valuation with QuantLib
+
+`prepayment-model value` feeds the fitted hazard model into a Monte Carlo valuation of a
+pass-through: Hull-White rate paths from QuantLib, a mortgage rate on every path, the model's
+monthly prepayment rate, cash flows, then spread and risk measures. For an illustrative 5.50%
+pass-through backed by 6.00% loans, priced at par
+([full results](reports/valuation/VALUATION_RESULTS.md), [method](docs/VALUATION.md)):
+
+| | Prepayments respond to rates | Cash flows held fixed |
+|---|---:|---:|
+| Spread over the curve | 58.5 bp (OAS, standard error about 1.6 bp) | 136.9 bp (zero-volatility) |
+| Duration | 3.67 | 5.22 |
+| Convexity | -2.70 | +0.49 |
+| Price change for -100 bp / +100 bp | +2.23 / -4.88 | +5.48 / -4.99 |
+
+- **Option cost: 78 bp.** Of the 137 bp the pool appears to earn over the curve, 78 bp pays for
+  the borrowers' right to refinance.
+- **Negative convexity, measured.** When rates fall 100 bp the pool gains 2.2 points, not 5.5.
+- **Hedge ratio.** The duration to hedge is 3.7, not the 5.2 a fixed-cash-flow view gives.
+
+![Price after a curve shift and projected prepayment speed](reports/valuation/figures/price_and_speed.png)
+
+The prepayment model is fitted on synthetic loans, and the curve, mortgage spread and rate
+volatility are made-up inputs, so these numbers show the mechanics and are not a valuation of
+any security. The model's inputs are held inside the range it was trained on; the method note
+explains why that matters over a 30-year horizon.
+
 ## Limitations and next research steps
 
 1. **Competing risks:** estimate separate refinance/sale/maturity/default hazards,
@@ -287,7 +315,7 @@ See the full [methodology note](docs/METHODOLOGY.md) and [model card](docs/MODEL
 
 ## Disclaimer
 
-For research and educational use only. Not investment advice, a valuation model,
-or an official Freddie Mac publication. Freddie Mac does not endorse this work.
+For research and educational use only. Not investment advice, a pricing model for any
+security, or an official Freddie Mac publication. Freddie Mac does not endorse this work.
 The author makes no representation that the model is suitable for trading, risk
 limits, accounting, capital, or borrower decisions.
