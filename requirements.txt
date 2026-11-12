@@ -5,4 +5,5 @@ scikit-learn>=1.5,<2
 matplotlib>=3.9,<4
 seaborn>=0.13,<1
 joblib>=1.4,<2
+QuantLib>=1.36,<2
 pytest>=8,<9
