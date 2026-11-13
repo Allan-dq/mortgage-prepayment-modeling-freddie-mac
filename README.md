@@ -24,6 +24,7 @@ calibration—not accuracy alone.
 | Models | Regularized logistic benchmark vs. histogram gradient-boosting challenger |
 | Validation | Non-overlapping calendar blocks (train / validate / test); ROC AUC, PR AUC, Brier score, calibration, decile lift |
 | What +1pp CPR means | On an illustrative $100M 6% pool: life shortens 0.68 years; a premium pool (5% yield) loses 0.39 points, a discount pool (7% yield) gains 0.32 ([business translation](#business-translation-what-one-point-of-prepayment-speed-is-worth)) |
+| MBS valuation | The model drives a QuantLib Hull-White Monte Carlo valuation of an illustrative 5.50% pass-through: OAS 58.5 bp vs. 136.9 bp zero-volatility spread (78 bp option cost); effective duration 3.67 vs. 5.22 with cash flows held fixed. Synthetic model and made-up market inputs ([details](#from-model-to-price-mbs-valuation-with-quantlib)) |
 | Freddie Mac results | Not in this repository: SFLLD loan-level data are licensed and not redistributed. Run `prepayment-model freddie` on your own files ([steps](#running-on-locally-licensed-freddie-mac-files)) |
 | Run it now | `pip install -e . && pytest && prepayment-model demo --loans 3000 --seed 42 --output reports/demo` uses synthetic data, no download needed ([details](#quick-start-fully-reproducible-synthetic-demonstration)) |
 
